@@ -33,7 +33,7 @@ function draw(index){
   ctx.fillRect(0,0,w,h);
   ctx.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
   lastDrawn=index;
-  counter.textContent=String(index+1).padStart(3,"0")+" / "+TOTAL;
+  if(counter) counter.textContent=String(index+1).padStart(3,"0")+" / "+TOTAL;
 }
 
 function loadFrame(i){
@@ -107,7 +107,7 @@ window.addEventListener("touchmove",e=>{
 window.addEventListener("resize",resize);
 
 async function loadZip(){
-  counter.textContent="LOADING / 298";
+  if(counter) counter.textContent="LOADING / 298";
   const response=await fetch(ZIP_URL,{cache:"force-cache"});
   if(!response.ok)throw new Error("Could not load animation ZIP.");
   const zip=await JSZip.loadAsync(await response.arrayBuffer());
@@ -132,5 +132,5 @@ async function loadZip(){
 resize();
 loadZip().catch(error=>{
   console.error(error);
-  counter.textContent="ANIMATION ERROR";
+  if(counter) counter.textContent="ANIMATION ERROR";
 });
