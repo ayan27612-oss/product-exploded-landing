@@ -29,7 +29,7 @@ function draw(index){
   const w=canvas.clientWidth,h=canvas.clientHeight;
   const scale=Math.min(w/img.naturalWidth,h/img.naturalHeight);
   const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
-  ctx.fillStyle="#e9e6df";
+  ctx.fillStyle="#080808";
   ctx.fillRect(0,0,w,h);
   ctx.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
   lastDrawn=index;
