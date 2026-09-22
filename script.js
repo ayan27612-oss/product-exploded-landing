@@ -88,7 +88,8 @@ function animate() {
 
   // Slow, buttery interpolation instead of snapping to every scroll event.
   const delta = target - current;
-  current += delta * 0.085;
+  // Smooth enough to feel cinematic, but still tracks both downward and upward scroll.
+  current += delta * 0.055;
 
   if (Math.abs(delta) < 0.015) current = target;
 
@@ -100,9 +101,9 @@ function animate() {
   }
 
   // Subtle cinematic camera movement layered over the frame sequence.
-  const scale = 1 + Math.sin(progress * Math.PI) * 0.045;
-  const driftX = Math.sin(progress * Math.PI * 2) * 12;
-  const driftY = Math.cos(progress * Math.PI) * 7;
+  const scale = 1 + Math.sin(progress * Math.PI) * 0.025;
+  const driftX = Math.sin(progress * Math.PI * 2) * 6;
+  const driftY = Math.cos(progress * Math.PI) * 4;
   canvas.style.transform = `translate3d(${driftX}px, ${driftY}px, 0) scale(${scale})`;
 
   stage.style.setProperty("--explore-progress", progress.toFixed(3));
