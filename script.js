@@ -1,154 +1,136 @@
-const canvas = document.getElementById("product-canvas");
-const ctx = canvas.getContext("2d", { alpha: false });
-const counter = document.getElementById("frame-counter");
-const exploded = document.querySelector(".exploded");
-const stage = document.querySelector(".sticky-stage");
+const canvas=document.getElementById("product-canvas");
+const ctx=canvas.getContext("2d",{alpha:false});
+const counter=document.getElementById("frame-counter");
 
-const ZIP_URL = "assets/frames/ezgif-5d0b213fdc0985fb-jpg.zip";
-const TOTAL = 298;
-const frames = new Array(TOTAL);
-const objectUrls = new Array(TOTAL);
+const ZIP_URL="assets/frames/ezgif-5d0b213fdc0985fb-jpg.zip";
+const TOTAL=298;
+const frames=new Array(TOTAL);
+const objectUrls=new Array(TOTAL);
 
-let current = 0;
-let target = 0;
-let raf = 0;
-let lastDrawn = -1;
-let ready = false;
-let imageRatio = 1;
+let progress=0;
+let target=0;
+let lastDrawn=-1;
+let raf=0;
+let ready=false;
+let touchY=0;
 
-function resize() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const rect = canvas.getBoundingClientRect();
-
-  canvas.width = Math.round(rect.width * dpr);
-  canvas.height = Math.round(rect.height * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  draw(Math.round(current));
+function resize(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const rect=canvas.getBoundingClientRect();
+  canvas.width=Math.round(rect.width*dpr);
+  canvas.height=Math.round(rect.height*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw(Math.round(progress));
 }
 
-function draw(index) {
-  const img = frames[index];
-  if (!img || !img.complete || !img.naturalWidth) return;
-
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
-  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
-  const dw = img.naturalWidth * scale;
-  const dh = img.naturalHeight * scale;
-
-  ctx.fillStyle = "#e9e6df";
-  ctx.fillRect(0, 0, w, h);
-  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
-
-  lastDrawn = index;
-  counter.textContent = String(index + 1).padStart(3, "0") + " / " + TOTAL;
+function draw(index){
+  const img=frames[index];
+  if(!img||!img.complete||!img.naturalWidth)return;
+  const w=canvas.clientWidth,h=canvas.clientHeight;
+  const scale=Math.min(w/img.naturalWidth,h/img.naturalHeight);
+  const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
+  ctx.fillStyle="#e9e6df";
+  ctx.fillRect(0,0,w,h);
+  ctx.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
+  lastDrawn=index;
+  counter.textContent=String(index+1).padStart(3,"0")+" / "+TOTAL;
 }
 
-function loadFrame(index) {
-  if (index < 0 || index >= TOTAL || frames[index]) return;
-
-  const url = objectUrls[index];
-  if (!url) return;
-
-  const img = new Image();
-  img.decoding = "async";
-
-  img.onload = async () => {
-    try { await img.decode(); } catch (_) {}
-    frames[index] = img;
-    imageRatio = img.naturalWidth / img.naturalHeight;
-
-    if (Math.round(current) === index) draw(index);
+function loadFrame(i){
+  if(i<0||i>=TOTAL||frames[i])return;
+  const url=objectUrls[i];
+  if(!url)return;
+  const img=new Image();
+  img.decoding="async";
+  img.onload=async()=>{
+    try{await img.decode()}catch(_){}
+    frames[i]=img;
+    if(Math.round(progress)===i)draw(i);
   };
-
-  img.src = url;
+  img.src=url;
 }
 
-function preloadAround(index) {
-  const radius = 18;
+function preload(i){
+  // Keep a generous local buffer so the sequence stays continuous.
+  for(let n=-24;n<=24;n++)loadFrame(i+n);
+}
 
-  for (let offset = -radius; offset <= radius; offset++) {
-    loadFrame(index + offset);
+function requestRender(){
+  if(!raf)raf=requestAnimationFrame(render);
+}
+
+function render(){
+  raf=0;
+  if(!ready)return;
+
+  // Smoothly follows the virtual scroll position in either direction.
+  progress+=(target-progress)*0.075;
+  if(Math.abs(target-progress)<0.02)progress=target;
+
+  const i=Math.max(0,Math.min(TOTAL-1,Math.round(progress)));
+  preload(i);
+  if(i!==lastDrawn&&frames[i])draw(i);
+
+  const p=progress/(TOTAL-1);
+  const scale=1+Math.sin(p*Math.PI)*0.025;
+  const x=Math.sin(p*Math.PI*2)*5;
+  const y=Math.cos(p*Math.PI)*3;
+  canvas.style.transform=`translate3d(${x}px,${y}px,0) scale(${scale})`;
+
+  requestRender();
+}
+
+function move(delta){
+  if(!ready)return;
+  // Wheel/touch distance becomes controlled frame movement, not page length.
+  target=Math.max(0,Math.min(TOTAL-1,target+delta));
+  requestRender();
+}
+
+window.addEventListener("wheel",e=>{
+  e.preventDefault();
+  move(e.deltaY*0.32);
+},{passive:false});
+
+window.addEventListener("touchstart",e=>{
+  touchY=e.touches[0].clientY;
+},{passive:true});
+
+window.addEventListener("touchmove",e=>{
+  const y=e.touches[0].clientY;
+  const delta=(touchY-y)*0.95;
+  touchY=y;
+  move(delta);
+  e.preventDefault();
+},{passive:false});
+
+window.addEventListener("resize",resize);
+
+async function loadZip(){
+  counter.textContent="LOADING / 298";
+  const response=await fetch(ZIP_URL,{cache:"force-cache"});
+  if(!response.ok)throw new Error("Could not load animation ZIP.");
+  const zip=await JSZip.loadAsync(await response.arrayBuffer());
+
+  const files=Object.values(zip.files)
+    .filter(file=>!file.dir&&/ezgif-frame-\d{3}\.jpg$/i.test(file.name))
+    .sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+
+  if(files.length!==TOTAL)throw new Error("Expected 298 frames, found "+files.length+".");
+
+  for(let i=0;i<TOTAL;i++){
+    const blob=await files[i].async("blob");
+    objectUrls[i]=URL.createObjectURL(blob);
   }
-}
 
-function getProgress() {
-  const start = exploded.offsetTop;
-  const distance = Math.max(1, exploded.offsetHeight - window.innerHeight);
-  return Math.max(0, Math.min(1, (window.scrollY - start) / distance));
-}
-
-function animate() {
-  raf = 0;
-  if (!ready) return;
-
-  const progress = getProgress();
-  target = progress * (TOTAL - 1);
-
-  // Slow, buttery interpolation instead of snapping to every scroll event.
-  const delta = target - current;
-  // Smooth enough to feel cinematic, but still tracks both downward and upward scroll.
-  current += delta * 0.055;
-
-  if (Math.abs(delta) < 0.015) current = target;
-
-  const frameIndex = Math.max(0, Math.min(TOTAL - 1, Math.round(current)));
-  preloadAround(frameIndex);
-
-  if (frames[frameIndex] && frameIndex !== lastDrawn) {
-    draw(frameIndex);
-  }
-
-  // Subtle cinematic camera movement layered over the frame sequence.
-  const scale = 1 + Math.sin(progress * Math.PI) * 0.025;
-  const driftX = Math.sin(progress * Math.PI * 2) * 6;
-  const driftY = Math.cos(progress * Math.PI) * 4;
-  canvas.style.transform = `translate3d(${driftX}px, ${driftY}px, 0) scale(${scale})`;
-
-  stage.style.setProperty("--explore-progress", progress.toFixed(3));
-  requestUpdate();
-}
-
-function requestUpdate() {
-  if (!raf) raf = requestAnimationFrame(animate);
-}
-
-async function loadZip() {
-  counter.textContent = "LOADING / 298";
-
-  const response = await fetch(ZIP_URL, { cache: "force-cache" });
-  if (!response.ok) throw new Error("Could not load animation ZIP.");
-
-  const zip = await JSZip.loadAsync(await response.arrayBuffer());
-
-  const files = Object.values(zip.files)
-    .filter(file => !file.dir && /ezgif-frame-\d{3}\.jpg$/i.test(file.name))
-    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-
-  if (files.length !== TOTAL) {
-    throw new Error("Expected 298 frames, found " + files.length + ".");
-  }
-
-  // Extract URLs without decoding every image up front.
-  for (let i = 0; i < TOTAL; i++) {
-    const blob = await files[i].async("blob");
-    objectUrls[i] = URL.createObjectURL(blob);
-  }
-
-  ready = true;
-  preloadAround(0);
+  ready=true;
+  preload(0);
   loadFrame(0);
-  document.documentElement.classList.add("frames-ready");
-  requestUpdate();
+  requestRender();
 }
-
-window.addEventListener("scroll", requestUpdate, { passive: true });
-window.addEventListener("resize", resize);
 
 resize();
-
-loadZip().catch(error => {
+loadZip().catch(error=>{
   console.error(error);
-  counter.textContent = "ANIMATION ERROR";
+  counter.textContent="ANIMATION ERROR";
 });
