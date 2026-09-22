@@ -1,0 +1,32 @@
+name: Extract animation frames
+
+on:
+  push:
+    paths:
+      - "assets/frames/frames.zip"
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract frames
+        run: |
+          rm -f assets/frames/ezgif-frame-*.jpg
+          unzip -o assets/frames/frames.zip -d /tmp/frames
+          mkdir -p assets/frames
+          find /tmp/frames -type f -name 'ezgif-frame-*.jpg' -exec cp {} assets/frames/ \;
+          test "$(find assets/frames -maxdepth 1 -type f -name 'ezgif-frame-*.jpg' | wc -l)" -eq 298
+
+      - name: Commit extracted frames
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          rm assets/frames/frames.zip
+          git add assets/frames
+          git commit -m "Add complete 298-frame animation sequence" || exit 0
+          git push
