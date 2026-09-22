@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FORM / Watch Study</title>
-<meta name="description" content="A premium scroll-driven 3D watch showcase.">
+<title>FORM / Watch 001</title>
+<meta name="description" content="A cinematic full-screen watch showcase.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
@@ -13,52 +13,25 @@
 <body>
 <header class="nav">
   <a class="brand" href="#">FORM<span>®</span></a>
-  <nav><a href="#story">Story</a><a href="#details">Details</a><a href="#explore">Explore</a></nav>
-  <a class="nav-cta" href="#details">View watch <span>↗</span></a>
+  <div class="nav-center">WATCH / 001</div>
+  <div class="nav-right"><span>MECHANICAL</span><span>SCROLL TO EXPLORE</span></div>
 </header>
 
-<main>
-<section class="hero">
-  <div class="hero-copy">
+<main class="showcase">
+  <div class="watch-stage">
+    <canvas id="product-canvas" aria-label="Interactive exploded watch"></canvas>
+    <div class="vignette"></div>
+  </div>
+
+  <section class="hero-copy">
     <p class="eyebrow">FORM / WATCH 001</p>
     <h1>Time,<br>taken apart.</h1>
-    <p class="lede">A cinematic study of a mechanical watch. Scroll slowly through the case, movement and components that make every second possible.</p>
-    <a class="pill" href="#explore">Explore the watch <span>↓</span></a>
-  </div>
-  <div class="hero-meta"><span>01</span><span>SCROLL TO DISASSEMBLE</span></div>
-</section>
+    <p>Precision mechanics, revealed one layer at a time.</p>
+  </section>
 
-<section class="exploded" id="explore">
-  <div class="sticky-stage">
-    <canvas id="product-canvas" aria-label="Interactive exploded watch view"></canvas>
-    <div class="stage-label"><span>WATCH / EXPLODED VIEW</span><span id="frame-counter">001 / 298</span></div>
-  </div>
-  <div class="scroll-track" aria-hidden="true"></div>
-</section>
-
-<section class="statement" id="story">
-  <p class="eyebrow">THE MOVEMENT</p>
-  <h2>Hundreds of parts.<br>One rhythm.</h2>
-  <p>Every layer earns its place. The case, dial, hands and movement separate to reveal the engineering hidden beneath the surface.</p>
-</section>
-
-<section class="details" id="details">
-  <div class="detail-head"><p class="eyebrow">WATCH SPECIFICATION</p><span>02 / 03</span></div>
-  <div class="detail-grid">
-    <div><small>01</small><h3>Case</h3><p>Precision-machined geometry built around a clean, balanced silhouette.</p></div>
-    <div><small>02</small><h3>Movement</h3><p>A compact mechanical architecture revealed layer by layer as you scroll.</p></div>
-    <div><small>03</small><h3>Details</h3><p>Hands, dial, crystal and finishing come together as one measured object.</p></div>
-  </div>
-</section>
-
-<section class="closing">
-  <p class="eyebrow">FORM / WATCH 001</p>
-  <h2>See what<br>keeps time.</h2>
-  <a class="pill light" href="#explore">Explore again <span>↑</span></a>
-</section>
+  <div class="bottom-left">SCROLL DOWN / UNPACK<br>SCROLL UP / ASSEMBLE</div>
+  <div class="frame-status"><span>EXPLODED VIEW</span><span id="frame-counter">001 / 298</span></div>
 </main>
-
-<footer><span>FORM®</span><span>WATCH STUDY / 2026</span><span>BUILT FOR THE WEB</span></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script src="script.js"></script>
