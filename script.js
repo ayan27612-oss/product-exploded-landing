@@ -51,7 +51,6 @@ function loadFrame(i){
 }
 
 function preload(i){
-  // Keep a generous local buffer so the sequence stays continuous.
   for(let n=-24;n<=24;n++)loadFrame(i+n);
 }
 
@@ -63,9 +62,9 @@ function render(){
   raf=0;
   if(!ready)return;
 
-  // Smoothly follows the virtual scroll position in either direction.
-  progress+=(target-progress)*0.075;
-  if(Math.abs(target-progress)<0.02)progress=target;
+  // Gentle easing keeps the watch movement smooth and deliberately slow.
+  progress+=(target-progress)*0.045;
+  if(Math.abs(target-progress)<0.01)progress=target;
 
   const i=Math.max(0,Math.min(TOTAL-1,Math.round(progress)));
   preload(i);
@@ -77,19 +76,19 @@ function render(){
   const y=Math.cos(p*Math.PI)*3;
   canvas.style.transform=`translate3d(${x}px,${y}px,0) scale(${scale})`;
 
-  requestRender();
+  if(Math.abs(target-progress)>0.01)requestRender();
 }
 
 function move(delta){
   if(!ready)return;
-  // Wheel/touch distance becomes controlled frame movement, not page length.
   target=Math.max(0,Math.min(TOTAL-1,target+delta));
   requestRender();
 }
 
 window.addEventListener("wheel",e=>{
   e.preventDefault();
-  move(e.deltaY*0.32);
+  // Lower multiplier = slower, more controlled frame movement.
+  move(e.deltaY*0.18);
 },{passive:false});
 
 window.addEventListener("touchstart",e=>{
@@ -98,7 +97,7 @@ window.addEventListener("touchstart",e=>{
 
 window.addEventListener("touchmove",e=>{
   const y=e.touches[0].clientY;
-  const delta=(touchY-y)*0.95;
+  const delta=(touchY-y)*0.55;
   touchY=y;
   move(delta);
   e.preventDefault();
