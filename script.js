@@ -2,6 +2,7 @@ const canvas = document.getElementById("product-canvas");
 const ctx = canvas.getContext("2d", { alpha: false });
 const counter = document.getElementById("frame-counter");
 const exploded = document.querySelector(".exploded");
+const stage = document.querySelector(".sticky-stage");
 
 const ZIP_URL = "assets/frames/ezgif-5d0b213fdc0985fb-jpg.zip";
 const TOTAL = 298;
@@ -9,10 +10,11 @@ const frames = new Array(TOTAL);
 const objectUrls = new Array(TOTAL);
 
 let current = 0;
-let desired = 0;
+let target = 0;
 let raf = 0;
 let lastDrawn = -1;
 let ready = false;
+let imageRatio = 1;
 
 function resize() {
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -22,7 +24,7 @@ function resize() {
   canvas.height = Math.round(rect.height * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-  draw(current);
+  draw(Math.round(current));
 }
 
 function draw(index) {
@@ -55,15 +57,16 @@ function loadFrame(index) {
   img.onload = async () => {
     try { await img.decode(); } catch (_) {}
     frames[index] = img;
+    imageRatio = img.naturalWidth / img.naturalHeight;
 
-    if (index === current) draw(index);
+    if (Math.round(current) === index) draw(index);
   };
 
   img.src = url;
 }
 
 function preloadAround(index) {
-  const radius = 10;
+  const radius = 18;
 
   for (let offset = -radius; offset <= radius; offset++) {
     loadFrame(index + offset);
@@ -78,22 +81,32 @@ function getProgress() {
 
 function animate() {
   raf = 0;
-
   if (!ready) return;
 
-  desired = Math.round(getProgress() * (TOTAL - 1));
+  const progress = getProgress();
+  target = progress * (TOTAL - 1);
 
-  // Follow scroll closely while avoiding needless canvas redraws.
-  if (current !== desired) {
-    current = desired;
-    preloadAround(current);
+  // Slow, buttery interpolation instead of snapping to every scroll event.
+  const delta = target - current;
+  current += delta * 0.085;
 
-    if (frames[current]) {
-      draw(current);
-    } else if (lastDrawn < 0) {
-      loadFrame(current);
-    }
+  if (Math.abs(delta) < 0.015) current = target;
+
+  const frameIndex = Math.max(0, Math.min(TOTAL - 1, Math.round(current)));
+  preloadAround(frameIndex);
+
+  if (frames[frameIndex] && frameIndex !== lastDrawn) {
+    draw(frameIndex);
   }
+
+  // Subtle cinematic camera movement layered over the frame sequence.
+  const scale = 1 + Math.sin(progress * Math.PI) * 0.045;
+  const driftX = Math.sin(progress * Math.PI * 2) * 12;
+  const driftY = Math.cos(progress * Math.PI) * 7;
+  canvas.style.transform = `translate3d(${driftX}px, ${driftY}px, 0) scale(${scale})`;
+
+  stage.style.setProperty("--explore-progress", progress.toFixed(3));
+  requestUpdate();
 }
 
 function requestUpdate() {
@@ -116,6 +129,7 @@ async function loadZip() {
     throw new Error("Expected 298 frames, found " + files.length + ".");
   }
 
+  // Extract URLs without decoding every image up front.
   for (let i = 0; i < TOTAL; i++) {
     const blob = await files[i].async("blob");
     objectUrls[i] = URL.createObjectURL(blob);
