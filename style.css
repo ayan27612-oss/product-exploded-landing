@@ -1,17 +1,17 @@
 *{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#e9e6df;color:#111;font-family:"DM Sans",sans-serif}
-.nav{position:fixed;z-index:10;top:0;left:0;width:100%;height:76px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(16,16,16,.1);background:rgba(233,230,223,.48);backdrop-filter:blur(18px)}
-.brand{font:600 20px "Space Grotesk";letter-spacing:-.05em;color:#111;text-decoration:none}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#080808;color:#f5f5f2;font-family:"DM Sans",sans-serif}
+.nav{position:fixed;z-index:10;top:0;left:0;width:100%;height:76px;padding:0 4vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.12);background:rgba(8,8,8,.52);backdrop-filter:blur(18px)}
+.brand{font:600 20px "Space Grotesk";letter-spacing:-.05em;color:#f5f5f2;text-decoration:none}
 .brand span{font:400 9px "DM Sans";vertical-align:top;margin-left:2px}
-.watch-name{font:500 11px "DM Sans";letter-spacing:.08em;color:#222}
-.showcase{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden}
-.watch-stage{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}
+.watch-name{font:500 11px "DM Sans";letter-spacing:.08em;color:#aaa}
+.showcase{position:relative;width:100%;height:100svh;min-height:560px;overflow:hidden;background:#080808}
+.watch-stage{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;background:#080808}
 #product-canvas{position:absolute;width:100%;height:100%;display:block;object-fit:contain;will-change:transform}
-.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at center,transparent 38%,rgba(0,0,0,.045) 100%)}
-.product-meta,.product-note,.scroll-hint{position:fixed;z-index:5;font-size:8px;letter-spacing:.16em;color:#555;pointer-events:none}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at center,transparent 34%,rgba(0,0,0,.58) 100%)}
+.product-meta,.product-note,.scroll-hint{right:4vw;bottom:28px;color:#aaa}
 .product-meta{left:4vw;top:102px;display:flex;gap:28px}
 .product-note{left:4vw;bottom:28px;display:flex;gap:28px}
-.product-note span:last-child{color:#888}
+.product-note span:last-child{color:#555}
 .scroll-hint{right:4vw;bottom:28px;color:#222}
 
 
