@@ -1,66 +1,139 @@
-const canvas=document.getElementById("product-canvas");
-const ctx=canvas.getContext("2d",{alpha:false});
-const counter=document.getElementById("frame-counter");
-const exploded=document.querySelector(".exploded");
+const canvas = document.getElementById("product-canvas");
+const ctx = canvas.getContext("2d", { alpha: false });
+const counter = document.getElementById("frame-counter");
+const exploded = document.querySelector(".exploded");
 
-const FILES=["assets/frames/ezgif-frame-001.jpg","assets/frames/ezgif-frame-002.jpg","assets/frames/ezgif-frame-003.jpg","assets/frames/ezgif-frame-004.jpg","assets/frames/ezgif-frame-005.jpg","assets/frames/ezgif-frame-006.jpg","assets/frames/ezgif-frame-007.jpg","assets/frames/ezgif-frame-008.jpg","assets/frames/ezgif-frame-009.jpg","assets/frames/ezgif-frame-010.jpg","assets/frames/ezgif-frame-011.jpg","assets/frames/ezgif-frame-012.jpg","assets/frames/ezgif-frame-013.jpg","assets/frames/ezgif-frame-014.jpg","assets/frames/ezgif-frame-015.jpg","assets/frames/ezgif-frame-016.jpg","assets/frames/ezgif-frame-017.jpg","assets/frames/ezgif-frame-018.jpg","assets/frames/ezgif-frame-019.jpg","assets/frames/ezgif-frame-020.jpg","assets/frames/ezgif-frame-021.jpg","assets/frames/ezgif-frame-022.jpg","assets/frames/ezgif-frame-023.jpg","assets/frames/ezgif-frame-024.jpg","assets/frames/ezgif-frame-025.jpg","assets/frames/ezgif-frame-026.jpg","assets/frames/ezgif-frame-027.jpg","assets/frames/ezgif-frame-028.jpg","assets/frames/ezgif-frame-029.jpg","assets/frames/ezgif-frame-036.jpg","assets/frames/ezgif-frame-037.jpg","assets/frames/ezgif-frame-039.jpg","assets/frames/ezgif-frame-045.jpg","assets/frames/ezgif-frame-047.jpg","assets/frames/ezgif-frame-048.jpg","assets/frames/ezgif-frame-052.jpg","assets/frames/ezgif-frame-054.jpg","assets/frames/ezgif-frame-055.jpg","assets/frames/ezgif-frame-057.jpg","assets/frames/ezgif-frame-060.jpg","assets/frames/ezgif-frame-062.jpg","assets/frames/ezgif-frame-063.jpg","assets/frames/ezgif-frame-066.jpg","assets/frames/ezgif-frame-069.jpg","assets/frames/ezgif-frame-072.jpg","assets/frames/ezgif-frame-075.jpg","assets/frames/ezgif-frame-076.jpg","assets/frames/ezgif-frame-077.jpg","assets/frames/ezgif-frame-078.jpg","assets/frames/ezgif-frame-082.jpg","assets/frames/ezgif-frame-083.jpg","assets/frames/ezgif-frame-084.jpg","assets/frames/ezgif-frame-087.jpg","assets/frames/ezgif-frame-088.jpg","assets/frames/ezgif-frame-089.jpg","assets/frames/ezgif-frame-090.jpg","assets/frames/ezgif-frame-091.jpg","assets/frames/ezgif-frame-092.jpg","assets/frames/ezgif-frame-093.jpg","assets/frames/ezgif-frame-096.jpg","assets/frames/ezgif-frame-100.jpg","assets/frames/ezgif-frame-104.jpg","assets/frames/ezgif-frame-105.jpg"];
-const TOTAL=FILES.length;
-const frames=new Array(TOTAL);
-let current=-1;
-let target=0;
-let raf=0;
+const ZIP_URL = "assets/frames/ezgif-5d0b213fdc0985fb-jpg.zip";
+const TOTAL = 298;
+const frames = new Array(TOTAL);
+const objectUrls = new Array(TOTAL);
 
-function resize(){
-  const dpr=Math.min(window.devicePixelRatio||1,2);
-  const r=canvas.getBoundingClientRect();
-  canvas.width=Math.round(r.width*dpr);
-  canvas.height=Math.round(r.height*dpr);
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  draw(current<0?0:current);
+let current = 0;
+let desired = 0;
+let raf = 0;
+let lastDrawn = -1;
+let ready = false;
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = canvas.getBoundingClientRect();
+
+  canvas.width = Math.round(rect.width * dpr);
+  canvas.height = Math.round(rect.height * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  draw(current);
 }
 
-function draw(index){
-  const img=frames[index];
-  if(!img||!img.complete||!img.naturalWidth)return;
-  const w=canvas.clientWidth,h=canvas.clientHeight;
-  const scale=Math.min(w/img.naturalWidth,h/img.naturalHeight);
-  const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;
-  ctx.fillStyle="#e9e6df";
-  ctx.fillRect(0,0,w,h);
-  ctx.drawImage(img,(w-dw)/2,(h-dh)/2,dw,dh);
-  counter.textContent=String(index+1).padStart(2,"0")+" / "+TOTAL;
+function draw(index) {
+  const img = frames[index];
+  if (!img || !img.complete || !img.naturalWidth) return;
+
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * scale;
+  const dh = img.naturalHeight * scale;
+
+  ctx.fillStyle = "#e9e6df";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+
+  lastDrawn = index;
+  counter.textContent = String(index + 1).padStart(3, "0") + " / " + TOTAL;
 }
 
-function loadAll(){
-  return Promise.all(FILES.map((src,i)=>new Promise(resolve=>{
-    const img=new Image();
-    img.decoding="async";
-    img.onload=()=>{frames[i]=img;resolve()};
-    img.onerror=resolve;
-    img.src=src;
-  })));
+function loadFrame(index) {
+  if (index < 0 || index >= TOTAL || frames[index]) return;
+
+  const url = objectUrls[index];
+  if (!url) return;
+
+  const img = new Image();
+  img.decoding = "async";
+
+  img.onload = async () => {
+    try { await img.decode(); } catch (_) {}
+    frames[index] = img;
+
+    if (index === current) draw(index);
+  };
+
+  img.src = url;
 }
 
-function getProgress(){
-  const start=exploded.offsetTop;
-  const distance=exploded.offsetHeight-window.innerHeight;
-  return Math.max(0,Math.min(1,(window.scrollY-start)/Math.max(1,distance)));
-}
+function preloadAround(index) {
+  const radius = 10;
 
-function update(){
-  target=Math.round(getProgress()*(TOTAL-1));
-  if(target!==current){
-    current=target;
-    draw(current);
+  for (let offset = -radius; offset <= radius; offset++) {
+    loadFrame(index + offset);
   }
-  raf=0;
 }
 
-window.addEventListener("scroll",()=>{if(!raf)raf=requestAnimationFrame(update)},{passive:true});
-window.addEventListener("resize",resize);
+function getProgress() {
+  const start = exploded.offsetTop;
+  const distance = Math.max(1, exploded.offsetHeight - window.innerHeight);
+  return Math.max(0, Math.min(1, (window.scrollY - start) / distance));
+}
 
-loadAll().then(()=>{
-  resize();
-  update();
+function animate() {
+  raf = 0;
+
+  if (!ready) return;
+
+  desired = Math.round(getProgress() * (TOTAL - 1));
+
+  // Follow scroll closely while avoiding needless canvas redraws.
+  if (current !== desired) {
+    current = desired;
+    preloadAround(current);
+
+    if (frames[current]) {
+      draw(current);
+    } else if (lastDrawn < 0) {
+      loadFrame(current);
+    }
+  }
+}
+
+function requestUpdate() {
+  if (!raf) raf = requestAnimationFrame(animate);
+}
+
+async function loadZip() {
+  counter.textContent = "LOADING / 298";
+
+  const response = await fetch(ZIP_URL, { cache: "force-cache" });
+  if (!response.ok) throw new Error("Could not load animation ZIP.");
+
+  const zip = await JSZip.loadAsync(await response.arrayBuffer());
+
+  const files = Object.values(zip.files)
+    .filter(file => !file.dir && /ezgif-frame-\d{3}\.jpg$/i.test(file.name))
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+  if (files.length !== TOTAL) {
+    throw new Error("Expected 298 frames, found " + files.length + ".");
+  }
+
+  for (let i = 0; i < TOTAL; i++) {
+    const blob = await files[i].async("blob");
+    objectUrls[i] = URL.createObjectURL(blob);
+  }
+
+  ready = true;
+  preloadAround(0);
+  loadFrame(0);
   document.documentElement.classList.add("frames-ready");
+  requestUpdate();
+}
+
+window.addEventListener("scroll", requestUpdate, { passive: true });
+window.addEventListener("resize", resize);
+
+resize();
+
+loadZip().catch(error => {
+  console.error(error);
+  counter.textContent = "ANIMATION ERROR";
 });
